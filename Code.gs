@@ -3399,7 +3399,6 @@ function debug() {
 }
 
 function dlxsolve(mat) {
-  let start = new Date().getTime();
   // https://arxiv.org/pdf/cs/0011047
 
   // init arrays by index
@@ -3491,10 +3490,7 @@ function dlxsolve(mat) {
     restore(colHead, LT);
   }
 
-  let numIters = 0;
-
   function cover(head, solution=[]) {
-    numIters++;
     if (head.rt == head) {
       return solution;
     }
@@ -3514,10 +3510,6 @@ function dlxsolve(mat) {
       solution.push(choice);
       iterFrom(choice, RT, node => coverCol(node.colHead));
 
-      let now = new Date().getTime() - start;
-      if (now >= 15000) {
-        return numIters;
-      };
       if (cover(head, solution)) {
         return solution;
       }
@@ -3533,14 +3525,12 @@ function dlxsolve(mat) {
   }
 
   let solution = cover(head);
-  if (solution && Array.isArray(solution)) {
+  if (solution) {
     let solutionArray = [];
     for (let node of solution) {
-      solutionArray[node.i] = [true];
+      solutionArray[node.i] = ["✅"];
     }
     return solutionArray
-  } else if (solution) {
-    return solution;
   } else {
     throw new Error("No solution found!")
   }
