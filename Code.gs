@@ -1,60 +1,66 @@
-const UP = Symbol("up");
-const DN = Symbol("dn");
-const LT = Symbol("lt");
-const RT = Symbol("rt");
+const UP = "up";
+const DN = "dn";
+const LT = "lt";
+const RT = "rt";
 
 // backwards
 const BK = {
-  UP: DN, DN: UP,
-  LT: RT, RT: LT,
+  [UP]: DN, [DN]: UP,
+  [LT]: RT, [RT]: LT,
 };
 
-// orthogonality
-const ORT = {
-  DN: RT, RT: DN,
-  UP: LT, LT: UP,
+function debug() {
+  dlxsolve([
+    [1, 1, 0, 0],
+    [1, 0, 1, 0],
+    [0, 0, 0, 1],
+    [0, 1, 0, 0],
+  ])
 }
-
 
 function dlxsolve(mat) {
   // https://arxiv.org/pdf/cs/0011047
 
   // init arrays by index
-  let colArrays = [], rowArrays = [];
-  let head = rowArrays[0][0] = { headOfHeads: true };
+  let head = { headOfHeads: true };
+  let colArrays = [[head]], rowArrays = [[head]];
   for (let i=0; i<mat.length; i++) {
     for (let j=0; j<mat[i].length; j++) {
       let x = mat[i][j];
       if (x) {
         // header row
-        rowArrays[0] = rowArrays[0] || [];
         rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true };
 
         let node = { i, j };
         rowArrays[i+1] = rowArrays[i+1] || [];
         rowArrays[i+1][j+1] = node;
+
         colArrays[j+1] = colArrays[j+1] || [];
+        colArrays[j+1][0] = rowArrays[0][j+1];
         colArrays[j+1][i+1] = node;
       }
     }
   }
 
   // init doubly linked lists
-  for (let [array, fw] of [[colArrays, DN], [rowArrays, RT]]) {
+  for (let [arrays, fw] of [[rowArrays, RT], [colArrays, DN]]) {
     let bk = BK[fw];
-    let frst, next, prev;
-    for (let i in array) {
-      next = array[i];
-      frst = frst || next;
-      if (prev) {
-        next[bk] = prev;
-        prev[fw] = next;
+    for (let j in arrays) {
+      let array = arrays[j];
+      let frst, next, prev;
+      for (let i in array) {
+        next = array[i];
+        frst = frst || next;
+        if (prev) {
+          next[bk] = prev;
+          prev[fw] = next;
+        }
+        prev = next;
       }
-      prev = next;
+      // wrap around
+      frst[bk] = next;
+      next[fw] = frst;
     }
-    // wrap around
-    frst[bk] = next;
-    next[fw] = frst;
   }
 
   // main algorithm
