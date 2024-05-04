@@ -29,7 +29,7 @@ function dlxsolve(mat) {
       let x = mat[i][j];
       if (x) {
         // header row
-        let colHead = rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true };
+        let colHead = rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true, n: 0 };
 
         let node = { i, j, colHead };
         rowArrays[i+1] = rowArrays[i+1] || [];
@@ -38,6 +38,8 @@ function dlxsolve(mat) {
         colArrays[j+1] = colArrays[j+1] || [];
         colArrays[j+1][0] = colHead;
         colArrays[j+1][i+1] = node;
+
+        colHead.n += 1;
       }
     }
   }
@@ -93,6 +95,7 @@ function dlxsolve(mat) {
     iterFrom(colHead, DN, inCol => {
       iterFrom(inCol, RT, inRow => {
         excise(inRow, DN);
+        inRow.colHead.n -= 1;
       });
     });
   }
@@ -101,16 +104,26 @@ function dlxsolve(mat) {
     iterFrom(colHead, UP, inCol => {
       iterFrom(inCol, LT, inRow => {
         restore(inRow, UP);
+        inRow.colHead.n += 1;
       });
     });
     restore(colHead, LT);
   }
 
   function cover(head, solution=[]) {
-    let nextCol = head.rt;
-    if (nextCol == head) {
+    if (head.rt == head) {
       return solution;
     }
+
+    let min = Infinity;
+    let nextCol;
+    iterFrom(head, RT, colHead => {
+      let { n } = colHead;
+      if (n < min) {
+        min = n;
+        nextCol = colHead;
+      }
+    });
 
     coverCol(nextCol);
     let ret = iterFrom(nextCol, DN, choice => {
