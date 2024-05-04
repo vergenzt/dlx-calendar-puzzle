@@ -1,5 +1,4 @@
-function newList() {
-  let head = { head: true };
+function newList(head) {
   let tail = head;
   return { head, tail };
 }
@@ -24,11 +23,17 @@ function dlxsolve(mat) {
   let cols = [], rows = [];
   mat.forEach((row, i) => row.forEach((x, j) => {
     if (x) {
-      let node = { x };
-      rows[i] = appendList(rows[i] || newList(), node, DIR.VERT);
-      cols[j] = appendList(cols[j] || newList(), node, DIR.HORZ);
+      let node = { x, i, j };
+      rows[i] = appendList(rows[i] || newList({ i }), node, DIR.VERT);
+      cols[j] = appendList(cols[j] || newList({ j }), node, DIR.HORZ);
     }
   }));
-
   
+  let cols_del = [];
+  let rows_sol = [];
+  let rows_del = [];
+  
+  while (true) {
+    
+  }
 }
