@@ -29,14 +29,14 @@ function dlxsolve(mat) {
       let x = mat[i][j];
       if (x) {
         // header row
-        rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true };
+        let colHead = rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true };
 
-        let node = { i, j };
+        let node = { i, j, colHead };
         rowArrays[i+1] = rowArrays[i+1] || [];
         rowArrays[i+1][j+1] = node;
 
         colArrays[j+1] = colArrays[j+1] || [];
-        colArrays[j+1][0] = rowArrays[0][j+1];
+        colArrays[j+1][0] = colHead;
         colArrays[j+1][i+1] = node;
       }
     }
@@ -88,20 +88,21 @@ function dlxsolve(mat) {
     node[fw][bk] = node;
   }
 
-  function coverCol(node) {
-    iterFrom(node, DN, inCol => {
-      excise(inCol, RT);
+  function coverCol(colHead) {
+    excise(colHead, RT);
+    iterFrom(colHead, DN, inCol => {
       iterFrom(inCol, RT, inRow => {
         excise(inRow, DN);
       });
     });
   }
 
-  function uncoverCol(node) {
-    iterFrom(node, UP, inCol => {
+  function uncoverCol(colHead) {
+    restore(colHead, LT);
+    iterFrom(colHead, UP, inCol => {
       restore(inCol, LT);
-      iterFrom(inCol, RT, inRow => {
-        excise(inRow, DN);
+      iterFrom(inCol, LT, inRow => {
+        restore(inRow, UP);
       });
     });
   }
@@ -115,13 +116,13 @@ function dlxsolve(mat) {
     coverCol(nextCol);
     iterFrom(nextCol, DN, choice => {
       solution.push(choice);
-      iterFrom(choice, RT, coverCol);
+      iterFrom(choice, RT, node => coverCol(node.colHead));
 
       if (cover(head, solution)) {
         return solution;
       }
 
-      iterFrom(choice, LT, uncoverCol);
+      iterFrom(choice, LT, node => uncoverCol(node.colHead));
       solution.pop();
     });
     uncoverCol(nextCol);
