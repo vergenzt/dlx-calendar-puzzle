@@ -10,12 +10,12 @@ const BK = {
 };
 
 function debug() {
-  dlxsolve([
+  console.log(dlxsolve([
     [1, 1, 0, 0],
     [1, 0, 1, 0],
     [0, 0, 0, 1],
     [0, 1, 0, 0],
-  ])
+  ]));
 }
 
 function dlxsolve(mat) {
@@ -98,13 +98,12 @@ function dlxsolve(mat) {
   }
 
   function uncoverCol(colHead) {
-    restore(colHead, LT);
     iterFrom(colHead, UP, inCol => {
-      restore(inCol, LT);
       iterFrom(inCol, LT, inRow => {
         restore(inRow, UP);
       });
     });
+    restore(colHead, LT);
   }
 
   function cover(head, solution=[]) {
@@ -114,7 +113,7 @@ function dlxsolve(mat) {
     }
 
     coverCol(nextCol);
-    iterFrom(nextCol, DN, choice => {
+    let ret = iterFrom(nextCol, DN, choice => {
       solution.push(choice);
       iterFrom(choice, RT, node => coverCol(node.colHead));
 
@@ -126,6 +125,10 @@ function dlxsolve(mat) {
       solution.pop();
     });
     uncoverCol(nextCol);
+
+    if (ret) {
+      return ret;
+    }
   }
 
   let solution = cover(head);
