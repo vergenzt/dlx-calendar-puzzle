@@ -1,9 +1,23 @@
-const DIR = {
-  VERT: ["up", "dn"],
-  HORZ: ["lt", "rt"],
+const UP = Symbol("up");
+const DN = Symbol("dn");
+const LT = Symbol("lt");
+const RT = Symbol("rt");
+
+// backwards
+const BK = {
+  UP: DN, DN: UP,
+  LT: RT, RT: LT,
 };
 
+// orthogonality
+const ORT = {
+  DN: RT, RT: DN,
+  UP: LT, LT: UP,
+}
+
+
 function dlxsolve(mat) {
+  // https://arxiv.org/pdf/cs/0011047
 
   // init arrays by index
   let colArrays = [], rowArrays = [];
@@ -26,8 +40,8 @@ function dlxsolve(mat) {
   }
 
   // init doubly linked lists
-  for (let [array, dir] of [[colArrays, DIR.VERT], [rowArrays, DIR.HORZ]]) {
-    let [bk, fw] = dir;
+  for (let [array, fw] of [[colArrays, DN], [rowArrays, RT]]) {
+    let bk = BK[fw];
     let frst, next, prev;
     for (let i in array) {
       next = array[i];
@@ -43,54 +57,78 @@ function dlxsolve(mat) {
     next[fw] = frst;
   }
 
-  let removals = [];
-  let choices = [];
+  // main algorithm
 
-  function remove(node, dir) {
-    let [bk, fw] = dir;
+  function iterFrom(node, fw, nodeFn) {
+    let next = node[fw];
+    while (next != node) {
+      let ret = nodeFn(next, fw);
+      if (ret) {
+        return ret;
+      }
+      next = next[fw];
+    }
+  }
+
+  function excise(node, fw) {
+    let bk = BK[fw];
     node[bk][fw] = node[fw];
     node[fw][bk] = node[bk];
-    return [node, dir];
-  };
-  
-  while (true) {
+  }
 
-    if (!head.rt) {
-      return "found a solution"; // todo: return it
+  function restore(node, fw) {
+    let bk = BK[fw];
+    node[bk][fw] = node;
+    node[fw][bk] = node;
+  }
+
+  function coverCol(node) {
+    iterFrom(node, DN, inCol => {
+      excise(inCol, RT);
+      iterFrom(inCol, RT, inRow => {
+        excise(inRow, DN);
+      });
+    });
+  }
+
+  function uncoverCol(node) {
+    iterFrom(node, UP, inCol => {
+      restore(inCol, LT);
+      iterFrom(inCol, RT, inRow => {
+        excise(inRow, DN);
+      });
+    });
+  }
+
+  function cover(head, solution=[]) {
+    let nextCol = head.rt;
+    if (nextCol == head) {
+      return solution;
     }
-    
-    // while no row from next col to choose, backtrack
-    while (!head.rt?.dn) {
-      // TODO
-    }
 
-    // choose row from next col
-    let chosen = head.rt.dn;
-    choices.push(chosen);
-    
-    let removal = [];
+    coverCol(nextCol);
+    iterFrom(nextCol, DN, choice => {
+      solution.push(choice);
+      iterFrom(choice, RT, coverCol);
 
-    // for each nodeLt in chosen row
-    let nextLt = chosen;
-    do {
-      // for each nodeUp in nodeLt's column
-      let nextUp = nextLt;
-      do {
-        // remove nodeUp from its row
-        removal.push([node, DIR.HORZ]);
-        node.lt.rt = node.rt;
-        node.rt.lt = node.lt;
-        node = node.up;
+      if (cover(head, solution)) {
+        return solution;
       }
-      while (nextUp != nextLt);
 
-      // remove nodeLt from its column
-      removal.push([node, DIR.VERT]);
-      nextLt.up.dn = nextLt.dn;
-      nextLt.dn.up = nextLt.up;
-      nextLt = nextLt.lt;
+      iterFrom(choice, LT, uncoverCol);
+      solution.pop();
+    });
+    uncoverCol(nextCol);
+  }
+
+  let solution = cover(head);
+  if (solution) {
+    let solutionArray = [];
+    for (let node of solution) {
+      solutionArray[node.i] = [true];
     }
-    while (nextLt != chosen);
-
+    return solutionArray
+  } else {
+    throw new Error("No solution found!")
   }
 }
