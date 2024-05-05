@@ -3400,6 +3400,7 @@ function debug() {
 
 function dlxsolve(mat) {
   // https://arxiv.org/pdf/cs/0011047
+  let start = new Date().getTime();
 
   // init arrays by index
   let head = { headOfHeads: true };
@@ -3409,7 +3410,7 @@ function dlxsolve(mat) {
       let x = mat[i][j];
       if (x) {
         // header row
-        let colHead = rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true, n: 0 };
+        let colHead = rowArrays[0][j+1] = rowArrays[0][j+1] || { head: true, j, n: 0 };
 
         let node = { i, j, colHead };
         rowArrays[i+1] = rowArrays[i+1] || [];
@@ -3491,11 +3492,15 @@ function dlxsolve(mat) {
   }
 
   function cover(head, solution=[]) {
-    if (head.rt == head) {
+    if (new Date().getTime() - start >= 29000) {
+      throw new Error("Num iterations: " + numIters);
+    }
+
+    if (head.rt === head) {
       return solution;
     }
 
-    let min = Infinity;
+    let min = Infinity, max = 0;
     let nextCol;
     iterFrom(head, RT, colHead => {
       let { n } = colHead;
@@ -3503,10 +3508,18 @@ function dlxsolve(mat) {
         min = n;
         nextCol = colHead;
       }
+      if (n > max) {
+        max = n;
+      }
     });
 
+    if (max === 0) {
+      return;
+    }
+
     coverCol(nextCol);
-    let ret = iterFrom(nextCol, DN, choice => {
+    let ret = (
+    iterFrom(nextCol, DN, choice => {
       solution.push(choice);
       iterFrom(choice, RT, node => coverCol(node.colHead));
 
@@ -3516,13 +3529,16 @@ function dlxsolve(mat) {
 
       iterFrom(choice, LT, node => uncoverCol(node.colHead));
       solution.pop();
-    });
-    uncoverCol(nextCol);
-
+    }));
     if (ret) {
       return ret;
     }
+
+    uncoverCol(nextCol);
+    numIters++;
   }
+
+  let numIters = 0;
 
   let solution = cover(head);
   if (solution) {
