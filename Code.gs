@@ -71,23 +71,13 @@ function dlxsolve(mat) {
 
   // main algorithm
 
-  function excise(node, fw) {
-    let bk = BK[fw];
-    node[bk][fw] = node[fw];
-    node[fw][bk] = node[bk];
-  }
-
-  function restore(node, fw) {
-    let bk = BK[fw];
-    node[bk][fw] = node;
-    node[fw][bk] = node;
-  }
-
   function coverCol(colHead) {
-    excise(colHead, RT);
+    colHead[LT][RT] = colHead[RT]
+    colHead[RT][LT] = colHead[LT];
     for (let inCol = colHead[DN]; inCol !== colHead; inCol = inCol[DN]) {
       for (let inRow = inCol[RT]; inRow !== inCol; inRow = inRow[RT]) {
-        excise(inRow, DN);
+        inRow[DN][UP] = inRow[UP]
+        inRow[UP][DN] = inRow[DN];
         inRow.colHead.n -= 1;
       }
     }
@@ -96,11 +86,13 @@ function dlxsolve(mat) {
   function uncoverCol(colHead) {
     for (let inCol = colHead[UP]; inCol !== colHead; inCol = inCol[UP]) {
       for (let inRow = inCol[LT]; inRow !== inCol; inRow = inRow[LT]) {
-        restore(inRow, UP);
+        inRow[UP][DN] = inRow[DN]
+        inRow[DN][UP] = inRow[UP];
         inRow.colHead.n += 1;
       }
     }
-    restore(colHead, LT);
+    colHead[RT][LT] = colHead[LT]
+    colHead[LT][RT] = colHead[RT];
   }
 
   function cover(head, solution=[]) {
