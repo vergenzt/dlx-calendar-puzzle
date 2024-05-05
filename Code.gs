@@ -85,8 +85,8 @@ function dlxsolve(mat) {
 
   function coverCol(colHead) {
     excise(colHead, RT);
-    for (let inCol = colHead.DN; inCol !== colHead; inCol = inCol.DN) {
-      for (let inRow = inCol.RT; inRow !== inCol; inRow = inRow.RT) {
+    for (let inCol = colHead[DN]; inCol !== colHead; inCol = inCol[DN]) {
+      for (let inRow = inCol[RT]; inRow !== inCol; inRow = inRow[RT]) {
         excise(inRow, DN);
         inRow.colHead.n -= 1;
       }
@@ -94,8 +94,8 @@ function dlxsolve(mat) {
   }
 
   function uncoverCol(colHead) {
-    for (let inCol = colHead.UP; inCol !== colHead; inCol = inCol.UP) {
-      for (let inRow = inCol.LT; inRow !== inCol; inRow = inRow.LT) {
+    for (let inCol = colHead[UP]; inCol !== colHead; inCol = inCol[UP]) {
+      for (let inRow = inCol[LT]; inRow !== inCol; inRow = inRow[LT]) {
         restore(inRow, UP);
         inRow.colHead.n += 1;
       }
@@ -114,7 +114,7 @@ function dlxsolve(mat) {
 
     let min = Infinity, max = 0;
     let nextCol;
-    for (let colHead = head.RT; colHead !== head; colHead = colHead.RT) {
+    for (let colHead = head[RT]; colHead !== head; colHead = colHead[RT]) {
       let { n } = colHead;
       if (n < min) {
         min = n;
@@ -130,9 +130,9 @@ function dlxsolve(mat) {
     }
 
     coverCol(nextCol);
-    for (let choice = nextCol.DN; choice !== nextCol; choice = choice.DN) {
+    for (let choice = nextCol[DN]; choice !== nextCol; choice = choice[DN]) {
       solution.push(choice);
-      for (let node = choice.RT; node !== choice; node = node.RT) {
+      for (let node = choice[RT]; node !== choice; node = node[RT]) {
         coverCol(node.colHead)
       }
 
@@ -140,7 +140,7 @@ function dlxsolve(mat) {
         return solution;
       }
 
-      for (let node = choice.LT; node !== choice; node = node.LT) {
+      for (let node = choice[LT]; node !== choice; node = node[LT]) {
         uncoverCol(node.colHead)
       }
       solution.pop();
