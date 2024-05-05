@@ -86,60 +86,55 @@ function dlxsolve(mat) {
   function uncoverCol(colHead) {
     for (let inCol = colHead[UP]; inCol !== colHead; inCol = inCol[UP]) {
       for (let inRow = inCol[LT]; inRow !== inCol; inRow = inRow[LT]) {
-        inRow[UP][DN] = inRow[DN]
-        inRow[DN][UP] = inRow[UP];
+        inRow[UP][DN] = inRow;
+        inRow[DN][UP] = inRow;
         inRow.colHead.n += 1;
       }
     }
-    colHead[RT][LT] = colHead[LT]
-    colHead[LT][RT] = colHead[RT];
+    colHead[RT][LT] = colHead
+    colHead[LT][RT] = colHead;
   }
 
-  function cover(head, solution=[]) {
-    if (new Date().getTime() - start >= 29000) {
-      throw new Error("Num iterations: " + numIters);
-    }
+  function cover(head) {
+    let numIters = 0;
+    let solution = [];
 
-    if (head.rt === head) {
-      return solution;
-    }
-
-    let min = Infinity, max = 0;
-    let nextCol;
-    for (let colHead = head[RT]; colHead !== head; colHead = colHead[RT]) {
-      let { n } = colHead;
-      if (n < min) {
-        min = n;
-        nextCol = colHead;
-      }
-      if (n > max) {
-        max = n;
-      }
-    }
-
-    if (max === 0) {
-      return;
-    }
-
-    coverCol(nextCol);
-    for (let choice = nextCol[DN]; choice !== nextCol; choice = choice[DN]) {
-      solution.push(choice);
-      for (let node = choice[RT]; node !== choice; node = node[RT]) {
-        coverCol(node.colHead)
+    main: while(true) {
+      numIters++;
+      if (new Date().getTime() - start >= 29000) {
+        throw new Error("Num iterations: " + numIters);
       }
 
-      if (cover(head, solution)) {
+      if (head.rt === head) {
         return solution;
       }
 
-      for (let node = choice[LT]; node !== choice; node = node[LT]) {
-        uncoverCol(node.colHead)
+      let min = Infinity;
+      let nextCol;
+      for (let colHead = head[RT]; colHead !== head; colHead = colHead[RT]) {
+        let { n } = colHead;
+        if (n < min) {
+          min = n;
+          nextCol = colHead;
+        }
       }
-      solution.pop();
-    }
 
-    uncoverCol(nextCol);
-    numIters++;
+      coverCol(nextCol);
+      choice: for (let choice = nextCol[DN]; choice !== nextCol; choice = choice[DN]) {
+        solution.push(choice);
+        inRow: for (let inRow = choice[RT]; inRow !== choice; inRow = inRow[RT]) {
+          coverCol(inRow.colHead)
+        }
+
+        
+
+        inRow: for (let inRow = choice[LT]; inRow !== choice; inRow = inRow[LT]) {
+          uncoverCol(inRow.colHead)
+        }
+        solution.pop();
+      }
+      uncoverCol(nextCol);
+    }
   }
 
   let numIters = 0;
