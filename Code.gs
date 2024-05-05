@@ -71,17 +71,6 @@ function dlxsolve(mat) {
 
   // main algorithm
 
-  function iterFrom(node, fw, nodeFn) {
-    let next = node[fw];
-    while (next != node) {
-      let ret = nodeFn(next, fw);
-      if (ret) {
-        return ret;
-      }
-      next = next[fw];
-    }
-  }
-
   function excise(node, fw) {
     let bk = BK[fw];
     node[bk][fw] = node[fw];
@@ -96,21 +85,21 @@ function dlxsolve(mat) {
 
   function coverCol(colHead) {
     excise(colHead, RT);
-    iterFrom(colHead, DN, inCol => {
-      iterFrom(inCol, RT, inRow => {
+    for (let inCol = colHead.DN; inCol !== colHead; inCol = inCol.DN) {
+      for (let inRow = inCol.RT; inRow !== inCol; inRow = inRow.RT) {
         excise(inRow, DN);
         inRow.colHead.n -= 1;
-      });
-    });
+      }
+    }
   }
 
   function uncoverCol(colHead) {
-    iterFrom(colHead, UP, inCol => {
-      iterFrom(inCol, LT, inRow => {
+    for (let inCol = colHead.UP; inCol !== colHead; inCol = inCol.UP) {
+      for (let inRow = inCol.LT; inRow !== inCol; inRow = inRow.LT) {
         restore(inRow, UP);
         inRow.colHead.n += 1;
-      });
-    });
+      }
+    }
     restore(colHead, LT);
   }
 
@@ -125,7 +114,7 @@ function dlxsolve(mat) {
 
     let min = Infinity, max = 0;
     let nextCol;
-    iterFrom(head, RT, colHead => {
+    for (let colHead = head.RT; colHead !== head; colHead = colHead.RT) {
       let { n } = colHead;
       if (n < min) {
         min = n;
@@ -134,27 +123,27 @@ function dlxsolve(mat) {
       if (n > max) {
         max = n;
       }
-    });
+    }
 
     if (max === 0) {
       return;
     }
 
     coverCol(nextCol);
-    let ret = (
-    iterFrom(nextCol, DN, choice => {
+    for (let choice = nextCol.DN; choice !== nextCol; choice = choice.DN) {
       solution.push(choice);
-      iterFrom(choice, RT, node => coverCol(node.colHead));
+      for (let node = choice.RT; node !== choice; node = node.RT) {
+        coverCol(node.colHead)
+      }
 
       if (cover(head, solution)) {
         return solution;
       }
 
-      iterFrom(choice, LT, node => uncoverCol(node.colHead));
+      for (let node = choice.LT; node !== choice; node = node.LT) {
+        uncoverCol(node.colHead)
+      }
       solution.pop();
-    }));
-    if (ret) {
-      return ret;
     }
 
     uncoverCol(nextCol);
