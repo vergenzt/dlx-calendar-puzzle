@@ -100,7 +100,7 @@ function dlxsolve(mat) {
   function cover(head, solution=[]) {
     numIters++;
     if (new Date().getTime() - start >= 29000) {
-      throw new Error("Num iterations: " + numIters);
+      throw new Error("Timed out! Num iterations: " + numIters);
     }
 
     if (head.rt === head) {
@@ -142,8 +142,8 @@ function dlxsolve(mat) {
     for (let node of solution) {
       solutionArray[node.i] = ["✅"];
     }
-    return solutionArray
+    return solutionArray;
   } else {
-    throw new Error("No solution found!")
+    throw new Error(`No solution found! Num iters: ${numIters}`)
   }
 }
