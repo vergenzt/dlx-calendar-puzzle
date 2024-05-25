@@ -10,7 +10,7 @@ const BK = {
 };
 
 function debug() {
-  console.log(dlxsolve([
+  console.log(DLXSOLVE([
     // from https://github.com/playwithalgos/dancing-links/blob/e474c2df5631368910d788c2dbe0feceaf7a308b/index.html#L247-L252
     [1, 0, 0, 1, 0, 0, 1],
     [1, 0, 0, 1, 0, 0, 0],
@@ -21,11 +21,11 @@ function debug() {
   ]));
 }
 
-function dlxsolve(mat) {
+function DLXSOLVE(mat) {
   // https://arxiv.org/pdf/cs/0011047
   let start = new Date().getTime();
 
-  // init arrays by index
+  // init sparse arrays by index
   let head = { headOfHeads: true };
   let colArrays = [[head]], rowArrays = [[head]];
   for (let i=0; i<mat.length; i++) {
@@ -71,12 +71,29 @@ function dlxsolve(mat) {
 
   // main algorithm
 
+  let colHeadStrs = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  function log() {
+    let strs = [[' ', ' '], ['H', '─']];
+    for (let j=0; j<mat[0].length; j++) strs[1][4*j+2] = colHeadStrs[j]; // column headers
+    for (let i=0; i<mat.length; i++) {
+      for (let j=0; j<mat[i].length; j++) {
+        if (mat[i][j] === 1) {
+          let y = 3*i+1;
+          let x = 4*j+2;
+          strs[y] = strs[y] || [];
+          strs[y][x] = '➀';
+        }
+      }
+    }
+
+  }
+
   function coverCol(colHead) {
     colHead[LT][RT] = colHead[RT];
     colHead[RT][LT] = colHead[LT];
     for (let inCol = colHead[DN]; inCol !== colHead; inCol = inCol[DN]) {
       for (let inRow = inCol[RT]; inRow !== inCol; inRow = inRow[RT]) {
-        inRow[DN][UP] = inRow[UP]
+        inRow[DN][UP] = inRow[UP];
         inRow[UP][DN] = inRow[DN];
         inRow.colHead.n -= 1;
       }
@@ -99,7 +116,7 @@ function dlxsolve(mat) {
 
   function cover(head, solution=[]) {
     numIters++;
-    if (new Date().getTime() - start >= 29000) {
+    if (new Date().getTime() - start >= 29500) {
       throw new Error("Timed out! Num iterations: " + numIters);
     }
 
@@ -121,7 +138,7 @@ function dlxsolve(mat) {
     for (let choice = nextCol[DN]; choice !== nextCol; choice = choice[DN]) {
       solution.push(choice);
       for (let inRow = choice[RT]; inRow !== choice; inRow = inRow[RT]) {
-        coverCol(inRow.colHead)
+        coverCol(inRow.colHead);
       }
 
       if (cover(head, solution)) {
@@ -129,7 +146,7 @@ function dlxsolve(mat) {
       }
 
       for (let inRow = choice[LT]; inRow !== choice; inRow = inRow[LT]) {
-        uncoverCol(inRow.colHead)
+        uncoverCol(inRow.colHead);
       }
       solution.pop();
     }
